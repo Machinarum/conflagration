@@ -1,13 +1,17 @@
 from conflagration import wrap
 from collections import namedtuple
 
-def conflagrate(*files):
-    nts = [wrap.config_file(f) for f in files]
-    print nts._asdict().keys()
-    #self._data = namedtuple('conflagration', nts._asdict().keys())
+class Conflagration(object):
+    def __init__(
+            self, files=None, dirs=None, recursive=False, include_env=True):
+        fir_files = self._parse_dirs(*dirs, recurive=recursive)
+        _config_wrappers = [wrap.config_file(f) for f in files]
+        _env_wrapper = wrap.environment()
 
-def conf(files=None, dirs=None, recursive=False):
-    pass
-    # smash all these data sources together and
-    # return a Conflagration that's been initialized with that
-    # file list.
+    def _parse_dirs(*dirs, recursive=False):
+        files = 
+
+        pass
+        # smash all these data sources together and
+        # return a Conflagration that's been initialized with that
+        # file list.
