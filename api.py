@@ -1,13 +1,50 @@
 import wrap
 from collections import namedtuple
 
-def conflagration(files=None, dirs=None, recursive=False):
+
+class ConflictException(Exception):
+    pass
+
+def conflagration(
+        files=None, dirs=None, recurse_dirs=False,
+        allow_env_override=True, default_to_env=False,
+        raise_on_conflicts=True):
+    """
+    Will collect all configs at all file paths discovered in 'dirs' and
+    those in 'files', parse them, and combine them in a named tuple.
+    The load order of the files is not guaranteed.
+
+    if recurse_dirs is True, all files in all sub directories in all
+    directories in 'dirs' will be included in the final namedtuple.
+
+    If allow_env_override is True (default) any environment variable that
+    matches the 'env.section.key=value' pattern will override any matching
+    key/value pair provided in any config.
+
+    If default_to_env is True (default) any environment variable that
+    matches the 'env.section.key=value' pattern will be used as the default
+    value for that key, but will be overridden by any matching key/value
+    pair provided in any config.
+
+    If raise_on_conflicts is True (default), a ConflictException will be
+    raised if any two configs files hold differing values for the same
+    key/value pair in a shared section name
+    """
     dirs = dirs or list()
-    dir_files = _parse_dirs(dirs, recursive=recursive)
+    dir_files = _parse_dirs(dirs, recurse_dirs=recurse_dirs)
     files.extend(dir_files)
     _superdict = dict()
+    _envdict = wrap.environment()
+
+    if default_to_env:
+        _superdict.update(_envdict)
+
     for d in [wrap.config_file(f) for f in files]:
         _superdict.update(d)
+
+    if allow_env_override:
+        _superdict.update(_envdict)
+
     return _build_super_namedtuple(_superdict, 'conflagration')
 
 def _dotstring_to_nested_dict(dic, key, value):
@@ -38,7 +75,7 @@ def _build_super_namedtuple(superdict, name):
         _dotstring_to_nested_dict(nested_superdict, k.split('.'), v)
     return _dict_to_nt(nested_superdict, name)
 
-def _parse_dirs(dirs, recursive=False):
+def _parse_dirs(dirs, recurse_dirs=False):
     files = []
     for d in dirs:
         for dirpath, directories, filenames in os.walk(d):
