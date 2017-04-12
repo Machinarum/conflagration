@@ -2,13 +2,10 @@ import wrap
 from collections import namedtuple
 
 
-class ConflictException(Exception):
-    pass
-
 def conflagration(
         files=None, dirs=None, recurse_dirs=False,
         allow_env_override=True, default_to_env=False,
-        raise_on_conflicts=True):
+        raise_conflicts=True):
     """
     Will collect all configs at all file paths discovered in 'dirs' and
     those in 'files', parse them, and combine them in a named tuple.
@@ -17,33 +14,36 @@ def conflagration(
     if recurse_dirs is True, all files in all sub directories in all
     directories in 'dirs' will be included in the final namedtuple.
 
-    If allow_env_override is True (default) any environment variable that
+    If allow_env_override is True, any environment variable that
     matches the 'env.section.key=value' pattern will override any matching
     key/value pair provided in any config.
 
-    If default_to_env is True (default) any environment variable that
+    If default_to_env is True, any environment variable that
     matches the 'env.section.key=value' pattern will be used as the default
     value for that key, but will be overridden by any matching key/value
     pair provided in any config.
 
-    If raise_on_conflicts is True (default), a ConflictException will be
+    If raise_conflicts is True, a ConflictException will be
     raised if any two configs files hold differing values for the same
     key/value pair in a shared section name
     """
     dirs = dirs or list()
     dir_files = _parse_dirs(dirs, recurse_dirs=recurse_dirs)
     files.extend(dir_files)
-    _superdict = dict()
+
+    _filedict = dict()
+    for d in [wrap.config_file(f, raise_conflicts) for f in files]:
+        for c in set(d.keys()).intersection(set(_filedict.keys())):
+            if d[c] != _filedict[c]:
+                raise wrap.ConfigFileCollisionConflict
+        _filedict.update(d)
+
     _envdict = wrap.environment()
-
     if default_to_env:
-        _superdict.update(_envdict)
-
-    for d in [wrap.config_file(f) for f in files]:
-        _superdict.update(d)
+        _envdict.update(_filedict)
 
     if allow_env_override:
-        _superdict.update(_envdict)
+        _filedict.update(_envdict)
 
     return _build_super_namedtuple(_superdict, 'conflagration')
 
