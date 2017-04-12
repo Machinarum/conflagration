@@ -45,7 +45,8 @@ def conflagration(
     if allow_env_override:
         _filedict.update(_envdict)
 
-    return _build_super_namedtuple(_superdict, 'conflagration')
+    t = _build_super_namedtuple(_filedict, 'conflagration')
+    return t
 
 def _dotstring_to_nested_dict(dic, key, value):
     k = key[0]
@@ -67,7 +68,8 @@ def _dict_to_nt(d, name):
             finald[k] = _dict_to_nt(d[k], k)
         else:
             finald[k] = d[k]
-    return namedtuple(name, finald.keys(), verbose=True)(**finald)
+    nt = namedtuple(name, finald.keys(), verbose=True)
+    return nt(**finald)
 
 def _build_super_namedtuple(superdict, name):
     nested_superdict = dict()
