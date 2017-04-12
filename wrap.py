@@ -1,9 +1,10 @@
-from ConfigParser import SafeConfigParser
-import logging
 import os
+from ConfigParser import SafeConfigParser
+
 
 class ConfigFileCollisionConflict(Exception):
     pass
+
 
 def config_file(file, raise_conflicts=False):
     data = SafeConfigParser()
@@ -11,18 +12,19 @@ def config_file(file, raise_conflicts=False):
     ret = {}
     for s in data.sections():
         for k, v in data.items(s):
-            key = '{}.{}'.format(s,k)
+            key = '{}.{}'.format(s, k)
             if raise_conflicts and key in ret and ret.get(key) != v:
                 raise ConfigFileCollisionConflict
-            ret[key]=v
+            ret[key] = v
     return ret
+
 
 def environment(prefix='env.'):
     env_vars = os.environ
     filtered_vars = {
         k: v for k, v in env_vars.iteritems() if k.startswith(prefix)
     }
-    fdict={}
+    fdict = {}
     for k, v in filtered_vars.iteritems():
         _keysplit = k.split(prefix)
         new_key = None
