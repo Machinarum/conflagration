@@ -2,15 +2,20 @@ from ConfigParser import SafeConfigParser
 import logging
 import os
 
+class ConfigFileCollisionConflict(Exception):
+    pass
 
-def config_file(file):
+def config_file(file, raise_conflicts=False):
     data = SafeConfigParser()
     data.read(file)
-    section_dict = {}
+    ret = {}
     for s in data.sections():
         for k, v in data.items(s):
-            section_dict['{}.{}'.format(s,k)]=v
-    return section_dict
+            key = '{}.{}'.format(s,k)
+            if raise_conflicts and key in ret and ret.get(key) != v:
+                raise ConfigFileCollisionConflict
+            ret[key]=v
+    return ret
 
 def environment(prefix='env.'):
     env_vars = os.environ
