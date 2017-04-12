@@ -1,3 +1,4 @@
+import os
 import wrap
 from collections import namedtuple
 
@@ -48,6 +49,7 @@ def conflagration(
     t = _build_super_namedtuple(_filedict, 'conflagration')
     return t
 
+
 def _dotstring_to_nested_dict(dic, key, value):
     k = key[0]
     if len(key) > 1:
@@ -60,6 +62,7 @@ def _dotstring_to_nested_dict(dic, key, value):
         dic[k] = value
     return dic
 
+
 def _dict_to_nt(d, name):
     keys = d.keys()
     finald = dict()
@@ -71,11 +74,13 @@ def _dict_to_nt(d, name):
     nt = namedtuple(name, finald.keys(), verbose=True)
     return nt(**finald)
 
+
 def _build_super_namedtuple(superdict, name):
     nested_superdict = dict()
     for k, v in superdict.items():
         _dotstring_to_nested_dict(nested_superdict, k.split('.'), v)
     return _dict_to_nt(nested_superdict, name)
+
 
 def _parse_dirs(dirs, recurse_dirs=False):
     files = []
