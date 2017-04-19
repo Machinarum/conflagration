@@ -71,7 +71,7 @@ def _dict_to_nt(d, name):
             finald[k] = _dict_to_nt(d[k], k)
         else:
             finald[k] = d[k]
-    nt = namedtuple(name, finald.keys(), verbose=True)
+    nt = namedtuple(name, finald.keys())
     return nt(**finald)
 
 
