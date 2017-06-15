@@ -54,7 +54,7 @@ Examples:
     default_to_env if True, allow_env_override is True:
         os.environ['env.section_a.key'] = 'ENV_A'
         os.environ['env.section_c.key'] = 'ENV_C'
-        cfg = conflagration(["file1.conf"])
+        cfg = conflagration()
         print cfg.section_a.key
         >> 'ENV_A'
         print cfg.section_c.key
