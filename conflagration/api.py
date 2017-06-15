@@ -1,5 +1,5 @@
 import os
-import from conflagration import wrap
+from conflagration import wrap
 from collections import namedtuple
 
 """
