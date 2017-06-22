@@ -1,0 +1,4 @@
+pip
+flake8
+mock
+tox-travis

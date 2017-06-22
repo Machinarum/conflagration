@@ -72,6 +72,7 @@ Examples:
         >> 4
 """
 
+
 def conflagration(
         files=None, dirs=None, allow_env_override=True, default_to_env=False,
         raise_conflicts=True):
@@ -91,7 +92,7 @@ def conflagration(
     dirs = dirs or list()
     dir_files = _parse_dirs(dirs)
     files.extend(dir_files)
-    _filedict = _generate_filedict()
+    _filedict = _generate_filedict(files)
     _envdict = wrap.environment()
 
     if default_to_env:
@@ -103,9 +104,10 @@ def conflagration(
     t = _build_super_namedtuple(_filedict, 'conflagration')
     return t
 
-def _generate_filedict():
+
+def _generate_filedict(file_list):
     _filedict = dict()
-    for d in [wrap.config_file(f, raise_conflicts) for f in files]:
+    for d in [wrap.config_file(f) for f in file_list]:
         for c in set(d.keys()).intersection(set(_filedict.keys())):
             if d[c] != _filedict[c]:
                 raise wrap.ConfigFileCollisionConflict

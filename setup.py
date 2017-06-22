@@ -1,9 +1,19 @@
 from setuptools import setup, find_packages
 
-# Normal setup stuff
 setup(
     version='0.0.1',
     name='conflagration',
-    packages=find_packages(),
-    zip_safe=False,
-)
+    author='dwalleck and jidar',
+    author_email='core.machinarum@gmail.com',
+    install_requires=['six'],
+    packages=find_packages(exclude=('tests', 'docs')),
+    package_dir={'conflagration': 'conflagration'},
+    classifiers=(
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'Natural Language :: English',
+        'License :: Other/Proprietary License',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+    ))

@@ -1,5 +1,5 @@
 import os
-from ConfigParser import SafeConfigParser
+from six.moves.configparser import SafeConfigParser
 
 
 class ConfigFileCollisionConflict(Exception):
