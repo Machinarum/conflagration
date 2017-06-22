@@ -1,8 +1,15 @@
 language: python
 python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
+- '2.7'
+- '3.5'
+- '3.6'
 install:
-  - pip install -r test-requirements.txt
-script: flake8
+- pip install -r test-requires
+script: tox
+deploy:
+  provider: pypi
+  user: core.machinarum
+  password:
+    secure: YtN0CnblWDALlgPjSVVlNiRACFcIb1JkFQxOCzE8l+4K98E8kpsBrkXZs5RtJf0rqijLwkS8yOO/y+M4F+aUubaObUNx0arXKrDrHuDnhBJGGkp+bg1Np0GqgAG4N+sM/VOzt/HzEzfyCxsS4QEQUEUfl+chCOIk5RF6dQw5d/EKzqoCDxhCNfMPa+8TH97O5r8nM5ppof9TykbJ0hV5dJ4ydrxa3ny+K1jFCgK2X3shNgGT1eWJ+L52y8CFl0Bbk6hWiuUonHlxyT1zMecMNZXdkxoLzJmxtZGw1QmcajrimQYgJWTmyNG+cxNA7/ZO7OfC3kLJfR8zTSLx78glyRXHcILsGZr3sUjNoELU5L0iRGTpe2SnxrdOBG+8i7Vot9HacSEI/K7dl3C9ztLSIy8/46iqccDZBXIrWz2dUuf5aQz1LsHsoOkt4s1ONc8CIZhTdVLi/tEOjZnjkrq3p61wOgtrBDh+mePEoN6YKPI7YxurKqnnHRAj1cG/lLUBSHKCSa49h9UP6eJM4CJLKxW4WtiM0RrkoPwbKsJ0RibZlZ+zJ/Y9wpOqyZQCNmRrbAlN1F9kU2Ze+vQyI3RTcJdiIvEWqktErINYV4ZK8f1x+iCtUO6o9reMpGImPHKZqBGh/imwf7zKZOR4kxqE1xVnn2C3q2nXNtgN7IRfO8U=
+  on:
+    tags: true
