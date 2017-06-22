@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    version='0.0.1',
+    version='0.0.2',
     name='conflagration',
     author='dwalleck and jidar',
     author_email='core.machinarum@gmail.com',
