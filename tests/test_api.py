@@ -8,13 +8,6 @@ class Fixture(unittest.TestCase):
 
 class Test_parse_dirs(Fixture):
 
-    # @mock.patch('api.wrap')
-    # @mock.patch('api._parse_dirs')
-    # @mock.patch('api._generate_filedict')
-    # @mock.patch('api._build_super_namedtuple')
-    # def test_conflagration_defaults(self, mbsnt, mgf, mpf, mw):
-    #     r = conflagration()
-
     def test_parse_dirs_returns_empty_list_on_empty_dir_list(self):
         r = api._parse_dirs([])
         self.assertIsInstance(r, list)
@@ -70,9 +63,15 @@ class Test_parse_dirs(Fixture):
         mdtnd.return_value = 'VALUE1'
         mdtn.return_value = 'VALUE2'
         r = api._build_super_namedtuple(inputd, 'name')
+
         self.assertEqual(r, 'VALUE2')
-        mdtnd.assert_called_once_with(dict(), ['key', 'subkey'], 'VALUE0')
-        mdtn.assert_called_once_with(dict(), 'name')
+
+        mdtnd.assert_called_once_with(
+            return_dict=dict(),
+            splitkey_list=['key', 'subkey'],
+            value='VALUE0')
+
+        mdtn.assert_called_once_with(source_dict=dict(), name='name')
 
     @mock.patch("conflagration.api.os.walk")
     def test_parse_dirs_returns_file_list_for_multiple_dirs(self, mockwalk):

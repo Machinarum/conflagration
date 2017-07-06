@@ -75,7 +75,7 @@ Examples:
 
 def conflagration(
         files=None, dirs=None, allow_env_override=True, default_to_env=False,
-        raise_conflicts=True):
+        raise_conflicts=True, env_var_prefix='env', env_var_separator='__'):
     """
     :param files: A list of paths to config files.
     :param dirs: A list of directories that is presumed to contain only config
@@ -92,8 +92,10 @@ def conflagration(
     dirs = dirs or list()
     dir_files = _parse_dirs(dirs)
     files.extend(dir_files)
-    _filedict = _generate_filedict(files)
-    _envdict = wrap.environment()
+    _filedict = _generate_filedict(file_list=files)
+    _envdict = wrap.environment(
+        prefix=env_var_prefix,
+        separator=env_var_separator)
 
     if default_to_env:
         _envdict.update(_filedict)
@@ -101,7 +103,7 @@ def conflagration(
     if allow_env_override:
         _filedict.update(_envdict)
 
-    t = _build_super_namedtuple(_filedict, 'conflagration')
+    t = _build_super_namedtuple(superdict=_filedict, name='conflagration')
     return t
 
 
@@ -123,23 +125,29 @@ def _dotstring_to_nested_dict(return_dict, splitkey_list, value):
     if len(splitkey_list) > 1:
         klist = splitkey_list[1::]
         if k in return_dict:
-            _dotstring_to_nested_dict(return_dict[k], klist, value)
+            _dotstring_to_nested_dict(
+                return_dict=return_dict[k],
+                splitkey_list=klist,
+                value=value)
         else:
             return_dict[k] = _dotstring_to_nested_dict(
-                dict(), klist, value)
+                return_dict=dict(),
+                splitkey_list=klist,
+                value=value)
+
     elif len(splitkey_list) == 1:
         return_dict[k] = value
     return return_dict
 
 
-def _dict_to_nt(d, name):
-    keys = d.keys()
+def _dict_to_nt(source_dict, name):
+    keys = source_dict.keys()
     finald = dict()
     for k in keys:
-        if isinstance(d[k], dict):
-            finald[k] = _dict_to_nt(d[k], k)
+        if isinstance(source_dict[k], dict):
+            finald[k] = _dict_to_nt(source_dict=source_dict[k], name=k)
         else:
-            finald[k] = d[k]
+            finald[k] = source_dict[k]
     nt = namedtuple(name, finald.keys())
     return nt(**finald)
 
@@ -147,8 +155,14 @@ def _dict_to_nt(d, name):
 def _build_super_namedtuple(superdict, name):
     nested_superdict = dict()
     for k, v in superdict.items():
-        _dotstring_to_nested_dict(nested_superdict, k.split('.'), v)
-    return _dict_to_nt(nested_superdict, name)
+        _dotstring_to_nested_dict(
+            return_dict=nested_superdict,
+            splitkey_list=k.split('.'),
+            value=v)
+
+    return _dict_to_nt(
+        source_dict=nested_superdict,
+        name=name)
 
 
 def _parse_dirs(dirs):
