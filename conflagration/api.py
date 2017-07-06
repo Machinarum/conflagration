@@ -89,6 +89,7 @@ def conflagration(
     :param raise_conflicts: If True, raises an exception if conflicting values
         exist for the same conflagration address key among all config files.
     """
+    files = files or list()
     dirs = dirs or list()
     dir_files = _parse_dirs(dirs)
     files.extend(dir_files)
