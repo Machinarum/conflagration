@@ -1,6 +1,6 @@
 import os
-from conflagration import wrap
-from collections import namedtuple
+import json
+from conflagration import wrap, namespace
 
 """
 Conflagration takes multiple key/value sources and derives a
@@ -93,8 +93,8 @@ def conflagration(
     dirs = dirs or list()
     dir_files = _parse_dirs(dirs)
     files.extend(dir_files)
-    _filedict = _generate_filedict(file_list=files)
-    _envdict = wrap.environment(
+    _filedict = wrap.ConfigFile.multiparse(file_list=files)
+    _envdict = wrap.Env.parse(
         prefix=env_var_prefix,
         separator=env_var_separator)
 
@@ -104,23 +104,26 @@ def conflagration(
     if allow_env_override:
         _filedict.update(_envdict)
 
-    t = _build_super_namedtuple(superdict=_filedict, name='conflagration')
-    return t
-
-
-def _generate_filedict(file_list):
-    _filedict = dict()
-    for d in [wrap.config_file(f) for f in file_list]:
-        for c in set(d.keys()).intersection(set(_filedict.keys())):
-            if d[c] != _filedict[c]:
-                raise wrap.ConfigFileCollisionConflict
-        _filedict.update(d)
-    return _filedict
+    return _build_namespace(address_dict=_filedict)
 
 
 def _dotstring_to_nested_dict(return_dict, splitkey_list, value):
-    """Overrides existing values for duplicate key addresses with last
-       discovered value for that key address
+    """Replaces the value for the key in return_dict corresponding to the
+    first element in splitkey_list with a dictionary containing either the
+    provided value, or another dictionary containing the next element in the
+    split key list.  It will recurse doing this until there are no elements
+    left in the split key list.
+
+    Overrides existing values for duplicate key addresses with last
+    discovered value for that key address
+
+    Example:
+        Given
+            splitkey_list = ['this', 'is', 'a', 'key']
+            'value'='value'
+            return_dict = {}
+        Result
+            return_dict['this']={'is': {'a': {'key': 'value'}}}
     """
     k = splitkey_list[0]
     if len(splitkey_list) > 1:
@@ -141,29 +144,16 @@ def _dotstring_to_nested_dict(return_dict, splitkey_list, value):
     return return_dict
 
 
-def _dict_to_nt(source_dict, name):
-    keys = source_dict.keys()
-    finald = dict()
-    for k in keys:
-        if isinstance(source_dict[k], dict):
-            finald[k] = _dict_to_nt(source_dict=source_dict[k], name=k)
-        else:
-            finald[k] = source_dict[k]
-    nt = namedtuple(name, finald.keys())
-    return nt(**finald)
-
-
-def _build_super_namedtuple(superdict, name):
-    nested_superdict = dict()
-    for k, v in superdict.items():
+def _build_namespace(address_dict, separator='.'):
+    nested_address_dict = dict()
+    for k, v in address_dict.items():
         _dotstring_to_nested_dict(
-            return_dict=nested_superdict,
-            splitkey_list=k.split('.'),
+            return_dict=nested_address_dict,
+            splitkey_list=k.split(separator),
             value=v)
 
-    return _dict_to_nt(
-        source_dict=nested_superdict,
-        name=name)
+    jdict = json.dumps(nested_address_dict)
+    return json.loads(jdict, object_hook=namespace.namespace_hook)
 
 
 def _parse_dirs(dirs):

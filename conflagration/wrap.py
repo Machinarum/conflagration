@@ -2,41 +2,128 @@ import os
 from six.moves.configparser import SafeConfigParser
 
 
-class ConfigFileCollisionConflict(Exception):
-    pass
+class ConfigFile(object):
+
+    @staticmethod
+    def parse(file, raise_conflicts=False, separator="."):
+        """
+        Reads in a config file and convert is to a dictionary where each
+        entry follows the pattern dict["section.key"]="value"
+        """
+        data = SafeConfigParser()
+        data.read(file)
+        ret = {}
+        for s in data.sections():
+            for k, v in data.items(s):
+                key = '{}{}{}'.format(s, separator, k)
+                if raise_conflicts and key in ret and ret.get(key) != v:
+                    raise ConfigFile.ConfigFileCollisionConflict
+                ret[key] = v
+        return ret
+
+    @staticmethod
+    def write(cfg_obj, output_file_path):
+        """
+        Only supports writing out a conflagration object with namespaces that
+        follow the section.key=value pattern that ConfigFile.parse generates
+        """
+        parser = SafeConfigParser()
+        for k in cfg_obj.__dict__.keys():
+            parser.add_section(k)
+            try:
+                for sub_k, sub_v in cfg_obj.__dict__[k].__dict__.items():
+                    parser.set(k, sub_k, sub_v)
+            except Exception:
+                raise Exception(
+                    "Output to config file not supported for conflagrations"
+                    "nested beyond a one dot namespace.")
+
+        with open(output_file_path, 'w') as f:
+            parser.write(f)
+
+    @staticmethod
+    def multiparse(file_list, raise_conflicts=False, separator="."):
+        """
+        Reads in one or more config files and converts their content to a
+        dictionary, raising an error on key conflicts.
+        The keys will be equal to the section_name
+        """
+        data = dict()
+
+        # Parse each file to a dictionary, and update the data dict with its
+        # contents.
+        for f in file_list:
+            cfg_dict = ConfigFile.parse(
+                f, raise_conflicts=raise_conflicts, separator=separator)
+            for key in set(cfg_dict.keys()).intersection(set(data.keys())):
+                if raise_conflicts and cfg_dict[key] != data[key]:
+                    raise Exception(
+                        "At least two of the files passed in file_list define"
+                        " a different value for the same key in the same"
+                        " section.")
+            data.update(cfg_dict)
+        return data
 
 
-def config_file(file, raise_conflicts=False):
-    data = SafeConfigParser()
-    data.read(file)
-    ret = {}
-    for s in data.sections():
-        for k, v in data.items(s):
-            key = '{}.{}'.format(s, k)
-            if raise_conflicts and key in ret and ret.get(key) != v:
-                raise ConfigFileCollisionConflict
-            ret[key] = v
-    return ret
+class Env(object):
 
+    @staticmethod
+    def parse(prefix='env', separator="__"):
+        """
+        Returns a dictionary of all relavent environment variables and their
+        values, with the prefix stripped from the keys.
+        """
 
-def environment(prefix, separator):
-    """Returns a dictionary of all relavent environment variables and their
-    values, with the prefix stripped from the keys."""
-    env_vars = os.environ
-    filtered_vars = {
-        k: v for k, v in env_vars.iteritems() if k.startswith(prefix)
-    }
-    fdict = {}
-    for k, v in filtered_vars.iteritems():
-        _keysplit = k.split("{}{}".format(prefix, separator))
-        new_key = None
-        if len(_keysplit) > 1:
-            new_key = _keysplit[1]
-        elif len(_keysplit) == 1:
-            new_key = _keysplit[0]
-        # The rest of the codebase expects the separator to be a dot, but env
-        # vars can't have dots in the name.
-        new_key = new_key.replace(separator, ".")
-        fdict[new_key] = filtered_vars[k]
+        filtered_vars = Env.filter(prefix=prefix, separator=separator)
+        data = {}
 
-    return fdict
+        for k, v in filtered_vars.iteritems():
+            _keysplit = k.split("{}{}".format(prefix, separator))
+            new_key = None
+            if len(_keysplit) > 1:
+                new_key = _keysplit[1]
+            elif len(_keysplit) == 1:
+                new_key = _keysplit[0]
+
+            # The rest of the codebase expects the separator to be a dot by
+            #  default, but env vars can't have dots in the name.
+            new_key = new_key.replace(separator, ".")
+            data[new_key] = filtered_vars[k]
+
+        return data
+
+    @staticmethod
+    def filter(prefix='env', separator="__"):
+        """
+        Returns environment variable dictionary for env vars starting with
+        the provided prefix and separator
+        """
+        pfx = "{}{}".format(prefix, separator)
+        return {k: v for k, v in os.environ.iteritems() if k.startswith(pfx)}
+
+    @staticmethod
+    def export_shellscript(
+            cfg_obj, output_file_path=None, shell='bash', prefix='env',
+            separator="__"):
+        if shell != 'bash':
+            "Non-bash shells are not supported"
+
+        lines = ["# bash export file generated by conflagration"]
+        for k in cfg_obj.__dict__.keys():
+            try:
+                for sub_k, sub_v in cfg_obj.__dict__[k].__dict__.items():
+                    lines.append(
+                        "\nexport "
+                        "{prefix}{sep}{key}{sep}{subkey}={value}".format(
+                            prefix=prefix, sep=separator, key=k, subkey=sub_k,
+                            value=sub_v))
+            except Exception:
+                raise Exception(
+                    "Output to shell script not supported for conflagrations"
+                    "nested beyond a one dot namespace.")
+        if output_file_path:
+            with open(output_file_path, 'w') as f:
+                f.writelines(lines)
+        else:
+            for line in lines:
+                print(line)
