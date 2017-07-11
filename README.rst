@@ -9,3 +9,5 @@ conflagration
 
 An extensive fire that destroys a great deal of land or property...
 It also manages configuration data.
+
+Join us on slack @ machinarum.slack.com
