@@ -41,37 +41,11 @@ class Test_parse_dirs(Fixture):
             test_dict, ['key'], 'value1')
         self.assertEqual(expected, r)
 
-    @mock.patch("conflagration.api.namedtuple")
-    def test_dict_to_nt_flat_dict(self, mnt):
-        mnt.return_value = dict
-        data = {'key': 'value'}
-        r = api._dict_to_nt(data, 'name')
-        self.assertEqual(data, r)
-
-
-    @mock.patch("conflagration.api.namedtuple")
-    def test_dict_to_nt_nested_dict(self, mnt):
-        mnt.return_value = dict
-        data = {'key': {'subkey':'value'}}
-        r = api._dict_to_nt(data, 'name')
-        self.assertEqual(data, r)
-
-    @mock.patch("conflagration.api._dict_to_nt")
-    @mock.patch("conflagration.api._dotstring_to_nested_dict")
-    def test_build_super_namedtuple(self, mdtnd, mdtn):
-        inputd = {'key.subkey':'VALUE0'}
-        mdtnd.return_value = 'VALUE1'
-        mdtn.return_value = 'VALUE2'
-        r = api._build_super_namedtuple(inputd, 'name')
-
-        self.assertEqual(r, 'VALUE2')
-
-        mdtnd.assert_called_once_with(
-            return_dict=dict(),
-            splitkey_list=['key', 'subkey'],
-            value='VALUE0')
-
-        mdtn.assert_called_once_with(source_dict=dict(), name='name')
+    def test_build_namespace(self):
+        address_dict = {'key.subkey':'VALUE0'}
+        separator="."
+        r = api._build_namespace(address_dict, separator)
+        self.assertEqual(r.key.subkey, "VALUE0" )
 
     @mock.patch("conflagration.api.os.walk")
     def test_parse_dirs_returns_file_list_for_multiple_dirs(self, mockwalk):
