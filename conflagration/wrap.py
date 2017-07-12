@@ -12,14 +12,12 @@ class ConfigFile(object):
         """
         data = SafeConfigParser()
         data.read(file)
-        ret = {}
+        address_dict = {}
         for s in data.sections():
             for k, v in data.items(s):
                 key = '{}{}{}'.format(s, separator, k)
-                if raise_conflicts and key in ret and ret.get(key) != v:
-                    raise ConfigFile.ConfigFileCollisionConflict
-                ret[key] = v
-        return ret
+                address_dict[key] = v
+        return address_dict
 
     @staticmethod
     def write(cfg_obj, output_file_path):
@@ -48,21 +46,27 @@ class ConfigFile(object):
         dictionary, raising an error on key conflicts.
         The keys will be equal to the section_name
         """
-        data = dict()
+        aggregate_dict = dict()
 
         # Parse each file to a dictionary, and update the data dict with its
         # contents.
         for f in file_list:
             cfg_dict = ConfigFile.parse(
                 f, raise_conflicts=raise_conflicts, separator=separator)
-            for key in set(cfg_dict.keys()).intersection(set(data.keys())):
-                if raise_conflicts and cfg_dict[key] != data[key]:
-                    raise Exception(
-                        "At least two of the files passed in file_list define"
-                        " a different value for the same key in the same"
-                        " section.")
-            data.update(cfg_dict)
-        return data
+
+            # If any key exists in the aggregate dict and the config file dict,
+            # raise an exception if the values aren't identical.
+            if raise_conflicts:
+                intersection = set(cfg_dict.keys()).intersection(
+                    set(aggregate_dict.keys()))
+                for i in intersection:
+                    if cfg_dict[i] != aggregate_dict[i]:
+                        raise Exception(
+                            "At least two of the files passed in file_list"
+                            " define a different value for the same key in the"
+                            " same section")
+            aggregate_dict.update(cfg_dict)
+        return aggregate_dict
 
 
 class Env(object):
