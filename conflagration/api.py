@@ -93,7 +93,11 @@ def conflagration(
     dirs = dirs or list()
     dir_files = _parse_dirs(dirs)
     files.extend(dir_files)
-    _filedict = wrap.ConfigFile.multiparse(file_list=files)
+
+    _filedict = wrap.ConfigFile.multiparse(
+        file_list=files,
+        raise_conflicts=raise_conflicts)
+
     _envdict = wrap.Env.parse(
         prefix=env_var_prefix,
         separator=env_var_separator)
