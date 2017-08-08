@@ -126,7 +126,7 @@ def conflagration(
     if not namespace_obj:
         mods = [namespace.modifiers.KeyMapper({'self': 'self_'})]
         if lowercase_keys:
-            modifier_list.insert(0, namespace.modifiers.LowerCaseKeys())
+            mods.insert(0, namespace.modifiers.LowerCaseKeys())
         namespace_obj = namespace.ModifiableNamespace(modifier_list=mods)
 
     return _build_namespace(
