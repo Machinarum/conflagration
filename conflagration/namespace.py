@@ -10,6 +10,8 @@ class _NamespaceDict(_Namespace):
     def __getitem__(self, item):
         return self.__dict__[item]
 
+    def _update(self, other_dict):
+        self.__dict__.update(other_dict.__dict__)
 
 modifiers = _NamespaceDict()
 
@@ -52,7 +54,10 @@ class LowerCaseKeys(_BaseNamespaceModifier):
     def __call__(self, original_dict):
         for k in original_dict.keys():
             if k.lower() != k:
-                original_dict[k.lower()] = original_dict[k]
+                if k.lower() in original_dict:
+                    original_dict[k.lower()].update(original_dict[k])
+                else:
+                    original_dict[k.lower()] = original_dict[k]
                 del original_dict[k]
 
 
