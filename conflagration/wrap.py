@@ -5,17 +5,41 @@ from six.moves.configparser import SafeConfigParser
 class ConfigFile(object):
 
     @staticmethod
-    def parse(file, raise_conflicts=False, separator="."):
+    def read(cfgfile):
+        data = SafeConfigParser()
+        data.read(cfgfile)
+        return data
+
+    @staticmethod
+    def generate_address(section, separator, key):
+        return '{}{}{}'.format(section, separator, key)
+
+    @staticmethod
+    def parse(
+            cfgfile, raise_conflicts=False, case_insensitive=False,
+            separator="."):
         """
         Reads in a config file and convert is to a dictionary where each
         entry follows the pattern dict["section.key"]="value"
         """
-        data = SafeConfigParser()
-        data.read(file)
+
+        cfg = ConfigFile.read(cfgfile)
         address_dict = {}
-        for s in data.sections():
-            for k, v in data.items(s):
-                key = '{}{}{}'.format(s, separator, k)
+        for s in cfg.sections():
+            for k, v in cfg.items(s):
+                key = ConfigFile.generate_address(s, separator, k)
+                if case_insensitive:
+                    key = key.lower()
+                if raise_conflicts and key in address_dict.keys():
+                    msg = (
+                        "Duplicate section or key in config file{msg}: "
+                        "\nFile:{f}\nSection:{s}\nKey{k}".format(
+                            msg=' when case_insensitive=False' if
+                                case_insensitive else '',
+                            f=cfgfile,
+                            s=s,
+                            k=key))
+                    raise Exception(msg)
                 address_dict[key] = v
         return address_dict
 
@@ -40,7 +64,9 @@ class ConfigFile(object):
             parser.write(f)
 
     @staticmethod
-    def multiparse(file_list, raise_conflicts=False, separator="."):
+    def multiparse(
+            file_list, raise_conflicts=False, case_insensitive=False,
+            separator="."):
         """
         Reads in one or more config files and converts their content to a
         dictionary, raising an error on key conflicts.
@@ -52,7 +78,10 @@ class ConfigFile(object):
         # contents.
         for f in file_list:
             cfg_dict = ConfigFile.parse(
-                f, raise_conflicts=raise_conflicts, separator=separator)
+                f,
+                raise_conflicts=raise_conflicts, 
+                case_insensitive=case_insensitive,
+                separator=separator)
 
             # If any key exists in the aggregate dict and the config file dict,
             # raise an exception if the values aren't identical.
