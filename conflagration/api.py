@@ -76,7 +76,7 @@ Examples:
 def conflagration(
         files=None, dirs=None, allow_env_override=True, default_to_env=False,
         raise_conflicts=True, env_var_prefix='env', env_var_separator='__',
-        lowercase_keys=False, namespace_obj=None):
+        case_insensitive=False, namespace_obj=None, lowercase_keys=None):
     """
     :param files: A list of paths to config files.
     :param dirs: A list of directories that is presumed to contain only config
@@ -100,6 +100,19 @@ def conflagration(
         By default, the namespace object will lowercase all keys.  If you pass
         one in, it will override the lowercase_keys flag.
     """
+    if lowercase_keys is not None:
+        if case_insensitive is not None:
+            raise Exception(
+                msg="lowercase_keys is deprecated.  Use case_insensitive "
+                "instead.  Do not use both options together")
+        import warnings
+        warnings.warn(
+            'lowercase_keys option is deprecated, '
+            'use case_insensitive instead.')
+        case_insensitive = lowercase_keys
+
+    if case_insensitive is None:
+        case_insensitive=False
 
     #TODO: Make the interaction between the default ns behavior and a custom ns
     #      less clunky
@@ -111,17 +124,20 @@ def conflagration(
 
     _filedict = wrap.ConfigFile.multiparse(
         file_list=files,
-        raise_conflicts=raise_conflicts)
+        raise_conflicts=raise_conflicts,
+        case_insensitive=case_insensitive)
 
     _envdict = wrap.Env.parse(
         prefix=env_var_prefix,
-        separator=env_var_separator)
+        separator=env_var_separator,
+        case_insensitive=case_insensitive)
 
+    _envdict_orig = dict(_envdict)
     if default_to_env:
         _envdict.update(_filedict)
 
     if allow_env_override:
-        _filedict.update(_envdict)
+        _filedict.update(_envdict_orig)
 
     if not namespace_obj:
         mods = [namespace.modifiers.KeyMapper({'self': 'self_'})]
