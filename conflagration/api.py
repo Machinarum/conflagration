@@ -103,7 +103,7 @@ def conflagration(
     if lowercase_keys is not None:
         if case_insensitive is not None:
             raise Exception(
-                msg="lowercase_keys is deprecated.  Use case_insensitive "
+                "lowercase_keys is deprecated.  Use case_insensitive "
                 "instead.  Do not use both options together")
         import warnings
         warnings.warn(

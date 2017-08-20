@@ -57,7 +57,7 @@ class LowerCaseKeys(_BaseNamespaceModifier):
                 # An upper case k/v pair would overwrite an existing
                 # lower case k/v pair if
                 raise Exception(
-                    'Lowercasing keys would result in dataloss.  Upper case '
+                    'Lowercasing keys would result in dataloss. Uppercase '
                     'key {uk}={ukv} would overlap with lowercase key that has '
                     'a different value ({lk}={lkv})'.format(
                         uk=k,
@@ -66,7 +66,7 @@ class LowerCaseKeys(_BaseNamespaceModifier):
                         lkv=original_dict[k.lower()]))
             elif k.lower() in original_dict:
                 # The lower version exists but contains the same key.
-                # delete the upper case version andmove on.
+                # delete the upper case version and move on.
                 del original_dict[k]
             elif k.lower() not in original_dict:
                 # The lowercase version of the current key would be a new
