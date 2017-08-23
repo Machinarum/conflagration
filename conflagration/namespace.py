@@ -50,8 +50,27 @@ class LowerCaseKeys(_BaseNamespaceModifier):
     """
 
     def __call__(self, original_dict):
-        for k in original_dict.keys():
-            if k.lower() != k:
+        keylist = original_dict.keys()
+        for k in keylist:
+            if (k.lower() in original_dict) \
+                    and (original_dict[k.lower()] != original_dict[k]):
+                # An upper case k/v pair would overwrite an existing
+                # lower case k/v pair if
+                raise Exception(
+                    'Lowercasing keys would result in dataloss. Uppercase '
+                    'key {uk}={ukv} would overlap with lowercase key that has '
+                    'a different value ({lk}={lkv})'.format(
+                        uk=k,
+                        ukv=original_dict[k],
+                        lk=k.lower(),
+                        lkv=original_dict[k.lower()]))
+            elif k.lower() in original_dict:
+                # The lower version exists but contains the same key.
+                # delete the upper case version and move on.
+                del original_dict[k]
+            elif k.lower() not in original_dict:
+                # The lowercase version of the current key would be a new
+                # unique key.  Save the new lower version and delete the old
                 original_dict[k.lower()] = original_dict[k]
                 del original_dict[k]
 

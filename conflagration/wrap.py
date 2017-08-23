@@ -32,9 +32,9 @@ class ConfigFile(object):
                     key = key.lower()
                 if raise_conflicts and key in address_dict.keys():
                     msg = (
-                        "Duplicate section or key in config file{msg}: "
-                        "\nFile:{f}\nSection:{s}\nKey{k}".format(
-                            msg=' when case_insensitive=False' if
+                        "Duplicate section or key in config file {msg}: "
+                        "\nFile: {f}\nSection: {s}\nKey: {k}".format(
+                            msg='When case_insensitive=False' if
                                 case_insensitive else '',
                             f=cfgfile,
                             s=s,
@@ -79,7 +79,7 @@ class ConfigFile(object):
         for f in file_list:
             cfg_dict = ConfigFile.parse(
                 f,
-                raise_conflicts=raise_conflicts, 
+                raise_conflicts=raise_conflicts,
                 case_insensitive=case_insensitive,
                 separator=separator)
 
@@ -101,14 +101,20 @@ class ConfigFile(object):
 class Env(object):
 
     @staticmethod
-    def parse(prefix='env', separator="__"):
+    def parse(prefix='env', separator="__", case_insensitive=False):
         """
         Returns a dictionary of all relavent environment variables and their
         values, with the prefix stripped from the keys.
         """
 
-        filtered_vars = Env.filter(prefix=prefix, separator=separator)
+        filtered_vars = Env.filter(
+            prefix=prefix,
+            separator=separator,
+            case_insensitive=case_insensitive)
+
         data = {}
+        if case_insensitive:
+            prefix = prefix.lower()
 
         for k, v in filtered_vars.iteritems():
             _keysplit = k.split("{}{}".format(prefix, separator))
@@ -126,13 +132,35 @@ class Env(object):
         return data
 
     @staticmethod
-    def filter(prefix='env', separator="__"):
+    def filter(prefix='env', separator="__", case_insensitive=False):
         """
         Returns environment variable dictionary for env vars starting with
         the provided prefix and separator
         """
         pfx = "{}{}".format(prefix, separator)
-        return {k: v for k, v in os.environ.iteritems() if k.startswith(pfx)}
+        data = dict()
+        if case_insensitive:
+            for k, v in os.environ.iteritems():
+                if k.startswith(pfx):
+                    if k.lower() in os.environ \
+                            and os.environ.get(k.lower()) != os.environ.get(k):
+                        # The lower version of this key would conflict with
+                        # another key in the env
+                        raise Exception(
+                            'Lowercasing keys would result in dataloss. '
+                            'Upper case key {uk}={ukv} would overlap with '
+                            'lowercase key that has a different value '
+                            '({lk}={lkv})'.format(
+                                uk=k,
+                                ukv=os.environ.get(k),
+                                lk=k.lower(),
+                                lkv=os.environ.get(k.lower())))
+                    data[k.lower()] = v
+
+        else:
+            data = {
+                k: v for k, v in os.environ.iteritems() if k.startswith(pfx)}
+        return data
 
     @staticmethod
     def export_shellscript(
