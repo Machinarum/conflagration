@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 from conflagration import wrap, namespace
@@ -76,7 +77,8 @@ Examples:
 def conflagration(
         files=None, dirs=None, allow_env_override=True, default_to_env=False,
         raise_conflicts=True, env_var_prefix='env', env_var_separator='__',
-        case_insensitive=False, namespace_obj=None, lowercase_keys=None):
+        case_insensitive=False, namespace_obj=None, lowercase_keys=None,
+        argparse_namespace_object=None):
     """
     :param files: A list of paths to config files.
     :param dirs: A list of directories that is presumed to contain only config
@@ -99,6 +101,10 @@ def conflagration(
         as created via the ModifiableNamespace class in conflagration.namespace
         By default, the namespace object will lowercase all keys.  If you pass
         one in, it will override the lowercase_keys flag.
+    :param argparse_args: You can pass in the Nmespace object returned by
+        argparse.parse() in order to have it's values mixed with available env
+        and config sources provided.  If passed in, they override all other
+        values.
     """
     if lowercase_keys is not None:
         if case_insensitive is not None:
@@ -139,14 +145,18 @@ def conflagration(
     if allow_env_override:
         _filedict.update(_envdict_orig)
 
-    if not namespace_obj:
-        mods = [namespace.modifiers.KeyMapper({'self': 'self_'})]
-        if lowercase_keys:
-            mods.insert(0, namespace.modifiers.LowerCaseKeys())
-        namespace_obj = namespace.ModifiableNamespace(modifier_list=mods)
+    if argparse_namespace_object:
+        ano = copy.deepcopy(argparse_namespace_object.__dict__)
+        ano.update(_filedict)
+        _filedict = ano
+
+    mods = [namespace.modifiers.KeyMapper({'self': 'self_'})]
+    if lowercase_keys:
+        mods.insert(0, namespace.modifiers.LowerCaseKeys())
+    namespace_obj = namespace.ModifiableNamespace(modifier_list=mods)
 
     return _build_namespace(
-        address_dict=_filedict, namespace_obj=namespace_obj)
+        address_dict=ano, namespace_obj=namespace_obj)
 
 
 def _dotstring_to_nested_dict(return_dict, splitkey_list, value):
