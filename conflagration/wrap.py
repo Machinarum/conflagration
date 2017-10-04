@@ -1,4 +1,6 @@
 import os
+
+import six
 from six.moves.configparser import SafeConfigParser
 
 
@@ -116,7 +118,7 @@ class Env(object):
         if case_insensitive:
             prefix = prefix.lower()
 
-        for k, v in filtered_vars.iteritems():
+        for k, v in six.iteritems(filtered_vars):
             _keysplit = k.split("{}{}".format(prefix, separator))
             new_key = None
             if len(_keysplit) > 1:
@@ -140,7 +142,7 @@ class Env(object):
         pfx = "{}{}".format(prefix, separator)
         data = dict()
         if case_insensitive:
-            for k, v in os.environ.iteritems():
+            for k, v in six.iteritems(os.environ):
                 if k.startswith(pfx):
                     if k.lower() in os.environ \
                             and os.environ.get(k.lower()) != os.environ.get(k):
@@ -159,7 +161,7 @@ class Env(object):
 
         else:
             data = {
-                k: v for k, v in os.environ.iteritems() if k.startswith(pfx)}
+                k: v for k, v in six.iteritems(os.environ) if k.startswith(pfx)}
         return data
 
     @staticmethod

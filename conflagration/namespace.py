@@ -5,6 +5,7 @@ except ImportError:
     # Python 2.x fallback
     from argparse import Namespace as _Namespace
 
+from six import with_metaclass
 
 class _NamespaceDict(_Namespace):
     def __getitem__(self, item):
@@ -24,9 +25,8 @@ class _ModifierRegistrar(type):
         return modclass
 
 
-class _BaseNamespaceModifier(object):
-    __metaclass__ = _ModifierRegistrar
-
+class _BaseNamespaceModifier(with_metaclass(_ModifierRegistrar)):
+    pass
 
 class KeyMapper(_BaseNamespaceModifier):
     """Given key_remapping_dict, replaces all keys in original_dict with the
