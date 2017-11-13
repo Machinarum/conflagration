@@ -8,6 +8,9 @@ class ConfigFile(object):
 
     @staticmethod
     def read(cfgfile):
+        if not os.path.exists(cfgfile):
+            ex = IOError if six.PY2 else FileNotFoundError
+            raise ex('File {name} does not exist.'.format(name=cfgfile))
         data = SafeConfigParser()
         data.read(cfgfile)
         return data
@@ -79,9 +82,6 @@ class ConfigFile(object):
         # Parse each file to a dictionary, and update the data dict with its
         # contents.
         for f in file_list:
-            if not os.path.exists(f):
-                ex = IOError if six.PY2 else FileNotFoundError
-                raise ex('File {name} does not exist.'.format(name=f))
             cfg_dict = ConfigFile.parse(
                 f,
                 raise_conflicts=raise_conflicts,
