@@ -156,7 +156,7 @@ def conflagration(
     namespace_obj = namespace.ModifiableNamespace(modifier_list=mods)
 
     return _build_namespace(
-        address_dict=ano, namespace_obj=namespace_obj)
+        address_dict=_filedict, namespace_obj=namespace_obj)
 
 
 def _dotstring_to_nested_dict(return_dict, splitkey_list, value):
