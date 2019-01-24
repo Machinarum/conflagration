@@ -1,7 +1,11 @@
 import os
 
 import six
-from six.moves.configparser import SafeConfigParser
+
+if six.PY3:
+    from six.moves.configparser import ConfigParser
+else:
+    from six.moves.configparser import SafeConfigParser as ConfigParser
 
 
 class ConfigFile(object):
@@ -11,7 +15,7 @@ class ConfigFile(object):
         if not os.path.exists(cfgfile):
             ex = IOError if six.PY2 else FileNotFoundError
             raise ex('File {name} does not exist.'.format(name=cfgfile))
-        data = SafeConfigParser()
+        data = ConfigParser()
         data.read(cfgfile)
         return data
 
@@ -54,7 +58,7 @@ class ConfigFile(object):
         Only supports writing out a conflagration object with namespaces that
         follow the section.key=value pattern that ConfigFile.parse generates
         """
-        parser = SafeConfigParser()
+        parser = ConfigParser()
         for k in cfg_obj.__dict__.keys():
             parser.add_section(k)
             try:
